@@ -329,9 +329,9 @@ fun main() {
 }
 ```
 
-## 3. 匿名函数与函数类型
+## 4. 匿名函数与函数类型
 
-### 3.1 匿名函数
+### 4.1 匿名函数
 
 定义时不取名字的函数称之为匿名函数，**匿名函数通常整体传递给其他函数，或者从其他函数返回**。匿名函数对Kotlin很重要，有了它，我们能够根据需要制定特殊规则，轻松定制标准库里的内置函数。
 
@@ -349,7 +349,7 @@ fun main() {
 }
 ```
 
-### 3.2 函数类型与隐式返回
+### 4.2 函数类型与隐式返回
 
 匿名函数可以当做变量赋值给函数类型变量，就像其他变量一样，匿名函数就可以在代码里传递了。变量有类型，变量可以等于函数，函数也会有类型。**函数的类型，由传入的参数和返回值类型决定。**
 
@@ -371,7 +371,7 @@ val blessingFunction : () -> String = {
 }
 ```
 
-### 3.3 函数参数
+### 4.3 函数参数
 
 和具名函数一样，匿名函数可以不带参数，也可以带一个或多个任何类型的参数，需要带参数时，**参数的类型放在匿名函数的类型定义中，参数名则放在函数定义中。**
 
@@ -391,7 +391,7 @@ val blessingFunction : (String) -> String = {
 }
 ```
 
-### 3.4 类型推断
+### 4.4 类型推断
 
 定义一个变量时，如果已把匿名函数作为变量赋值给它，就不需要显示指明变量类型了。
 
@@ -413,7 +413,7 @@ val blessingFunction = { name:String, age:Int ->
 println(blessingFunction("Jack", 17))
 ```
 
-### 3.5 定义参数是函数的函数
+### 4.5 定义参数是函数的函数
 
 函数的参数是另外一个函数。
 
@@ -461,7 +461,7 @@ fun showOnBroad(goodsName: String, showDiscount: (String, Int) -> String) {
 }
 ```
 
-### 3.6 函数内联（了解）
+### 4.6 函数内联（了解）
 
 lambda可以让你更灵活地编写应用，但是**灵活也是要付出代价的**。
 
@@ -469,7 +469,7 @@ lambda可以让你更灵活地编写应用，但是**灵活也是要付出代价
 
 使用lambda的**递归函数无法内联**，因为会导致复制粘贴无限循环输出，编译会发出警告。
 
-### 3.7 函数引用
+### 4.7 函数引用
 
 要把函数作为参数传给其他函数使用，除了传lambda表达式，kotlin还提供了其他方式传递函数引用，函数引用可以把一个具名函数转换成一个值参，**使用lambda表达式的地方，都可以使用函数引用**。
 
@@ -509,11 +509,11 @@ fun configDiscountWords() : (String) -> String {
 }
 ```
 
-## 4. null安全与异常
+## 5. null安全与异常
 
 Kotlin中把运行时可能出现的null问题，以编译错误的方式，**提前在编译期强迫我们重视起来**，而不是等到运行时报错，导致crash，防范于未然。
 
-### 4.1 可空性
+### 5.1 可空性
 
 对于null值，Koltin反其道而行，**除非另有规定，变量不可以为null值**，这样运行时崩溃从根源上得到解决。
 
@@ -534,7 +534,7 @@ fun main() {
 }
 ```
 
-### 4.2 null安全
+### 5.2 null安全
 
 Kotlin区分可空类型和非可空类型，所以，要一个可空类型变量运行，而它又可能不存在，对于这种潜在危险，编译器时刻警惕着。为了应对这种风险，Kotlin不允许你在可空类型值上调用函数，除非**手动接手安全管理**。
 
@@ -545,7 +545,7 @@ fun main() {
 }
 ```
 
-#### 4.2.1 安全调用操作符
+#### 5.2.1 安全调用操作符
 
 `?.`表示对象为空则跳过调用。
 
@@ -575,7 +575,7 @@ fun main() {
 }
 ```
 
-#### 4.2.2 使用非空断言操作符
+#### 5.2.2 使用非空断言操作符
 
 `!!.`又称感叹号操作符，当变量值为null时，会抛出KotlinNullPointerException。
 
@@ -587,7 +587,7 @@ fun main() {
 }
 ```
 
-#### 4.2.3 使用if判断null值情况
+#### 5.2.3 使用if判断null值情况
 
 也可以使用if进行判断，但是相比之下安全调用操作符更加灵活，代码也更加简洁，可以使用安全操作符进行链式调用。
 
@@ -605,7 +605,7 @@ fun main() {
 }
 ```
 
-#### 4.2.4 使用合空并操作符
+#### 5.2.4 使用合空并操作符
 
 `?:`操作符的意思是，如果左边的求值结果为null，就使用右边的结果值。也可以和`let`函数一起使用来代替if/else语句。
 
@@ -620,7 +620,7 @@ fun main() {
 }
 ```
 
-### 4.3 异常
+### 5.3 异常
 
 kotlin标准库提供了一些便利函数，使用这些内置函数，可以抛出带自定义信息的异常，这些便利函数叫做先决条件函数，可以用它定义先决条件，条件必须满足，目标代码才能执行。
 
@@ -656,9 +656,9 @@ fun checkOperation(number: Int?) {
 class UnskilledException : IllegalArgumentException("操作不当") 
 ```
 
-## 12. 面向对象编程
+## 6. 面向对象编程
 
-### 4.1 类与对象
+### 6.1 类与对象
 
 首先，我们创建一个Person类，右击com.lifp.kotlin.helloworld包->New->Kotlin File/Class，我们选择创建一个Class，具体如下图：
 
@@ -693,7 +693,7 @@ fun main() {
 
 ![alt](https://github.com/FanpingLi/Kotlin/raw/main/pic/4.1.2.png)
 
-### 4.2 继承与构造函数
+### 6.2 继承与构造函数
 
 Kotlin中的继承与Java不太一样，Kotlin中非抽象类默认都是不可被继承的，相当于Java中给类声明了final关键字。如果想要一个类被继承，需要添加open关键字，如下：
 
@@ -712,3 +712,155 @@ class Student : Person() {
 }
 ```
 
+### 6.3 主构造函数和次构造函数
+
+Kotlin中把构造函数分为了两种：主构造函数和次构造函数。主构造函数是最常用的构造函数。
+
+每个类默认都有一个不带参数的主构造函数，当然也可以显式地指明参数。主构造函数的特点是没有函数体，直接定义在类名后即可。比如：
+
+```kotlin
+class Student(val sno: String, val grade: Int) : Person() {}
+// 如果需要在构造函数中编写一些逻辑,可在init结构体中编写
+class Student(val sno: String, val grade: Int) : Person() {
+  init {
+    println("sno is " + sno)
+    println("grade is " + grade)
+  }
+}
+// 我们将Person类改造一下
+open class Person(name: String, age: Int) {
+  
+}
+// Student也需要修改
+class Student(sno: String, grade: Int, name: String, age: Int) : Person(name, age) {
+  
+}
+```
+
+Kotlin规定，一个类只能有一个主构造函数，但是可以有多个次构造函数，次构造函数也可以实例化类，只不过他是有函数体的。但是当一个类既有主构造函数又有次构造函数时，所有的次构造函数必须调用主构造函数（包括间接调用）。
+
+```kotlin
+class Student(val sno: String, val grade: Int, name: String, age: Int) : Person(name, age) {
+  constructor(name: String, age: Int) : this("", 0, name, age) {}
+  constructor() : this("", 0) {}
+}
+```
+
+次构造函数通过constructor关键字来定义，这里定义了两个次构造函数：第一个次构造函数接收name和age参数，通过this关键字调用了主构造函数；第二个次构造函数不接收任何参数，通过this调用了第一个次构造函数。
+
+Kotlin也允许类中只有次构造函数，没有主构造函数。当一个类中没有显式地定义主构造函数且定义了次构造函数时，它就是没有主构造函数的。
+
+```kotlin
+class Student : Person {
+  constructor(name: String, age: Int) : super(name, age)
+}
+```
+
+这里Student类的后面没有显式地定义主构造函数并且定义了次构造函数，所以现在Student类没有主构造函数。所以继承Person类的时候也不需要再加上括号了。此时次构造函数只能直接调用父类的构造函数。
+
+| 修饰符    | Java                               | Kotlin             |
+| --------- | ---------------------------------- | ------------------ |
+| public    | 所有类可见                         | 所有类可见（默认） |
+| private   | 当前类可见                         | 当前类可见         |
+| protected | 当前类、子类、同一包路径下的类可见 | 当前类、子类可见   |
+| default   | 同一包路径下的类可见（默认）       | 无                 |
+| internal  | 无                                 | 同一模块中的类可见 |
+
+### 6.4 接口
+
+Kotlin中的接口部分几乎与Java完全一致，也是单继承结构。
+
+```kotlin
+interface Study {
+  fun readBooks()
+  fun doHomework()
+}
+
+class Student(name: String, age: Int) : Person(name, Int), Study {
+  override fun readBooks() {
+    println(name + "is reading")
+  }
+  
+  override fun doHomework() {
+    println(age + "is do homework")
+  }
+}
+
+// 接口默认实现
+interface Study {
+  fun readBooks()
+  
+  fun doHomework() {
+    println("do homework default impl")
+  }
+}
+```
+
+### 6.5 数据类与单例类
+
+Java中数据类通常需要重写equals()、hashCode()、toString()这几个方法。如果用Kotlin实现变得很简单：
+
+```kotlin
+data class Cellphone(val brand: String, val price: Double)
+```
+
+当一个类前面声明了data关键字后，表示这个类是一个数据类型，Kotlin会根据主构造函数中的参数自动生成方法，如果当一个类中没有任何代码时，还可以将尾部的大括号省略。
+
+```kotlin
+object Singleton {
+  fun singletonTest() {
+    println("singleton test is call")
+  }
+}
+```
+
+可以看到，在Kotlin中只需要把class关键字改成object关键字，一个单例类就创建完成了。Kotlin内部在背后自动帮我们创建了一个Singleton类的实例，并且保证全局只会存在一个Singleton实例。
+
+## 7. Lambda编程
+
+### 7.1 集合创建与遍历
+
+```kotlin
+// 初始化集合（不可变集合）
+val list = listOf("Apple", "Banana", "Orange", "Pear")
+// 遍历集合
+for (fruit in list) {
+  println(fruit)
+}
+// 创建可变集合
+val list = mutableListOf("Apple", "Banana", "Orange", "Pear")
+list.add("Grape")
+for (fruit in list) {
+  println(fruit)
+}
+// 初始化set集合与List相似,即setOf、mutableSetOf
+```
+
+```kotlin
+// 向集合中添加数据
+map["Apple"] = 1
+// 从集合中读取数据
+val number = map["Apple"]
+// 初始化Map集合，这里的键值对组合通过to进行关联的，他是一个infix函数，后序会介绍相关
+val map = mapOf("Apple" to 1, "Banana" to 2, "Orange" to 3)
+// 遍历Map集合
+for ((fruit, number) in map) {
+  println("fruit is" + fruit + ",number is" + number)
+}
+```
+
+### 7.2 集合的函数式API
+
+```kotlin
+// 使用函数式API找到单词最长的
+val list = listOf("Apple", "Banana", "Orange", "Pear")
+val maxLengthFruit = list.maxBy { it.length }
+```
+
+首先看一下Lambda的定义，Lambda就是一小段可以作为参数传递的代码。语法结构如下：
+
+```kotlin
+{参数名1: 参数类型, 参数名2: 参数类型 -> 函数体}
+```
+
+这是Lambda表达式最完整的语法结构定义。最外层是一对大括号，如果有参数传入到Lambda表达式中的话，我们还需要声明参数列表，参数列表的结尾使用一个->符号，表示参数列表的结束以及函数体的开始，函数体中可以编写任意行代码，并且最后一行代码会自动作为Lambda表达式的返回值。
