@@ -693,6 +693,16 @@ fun main() {
 
 ![alt](https://github.com/FanpingLi/Kotlin/raw/main/pic/4.1.2.png)
 
+Kotlin中使用`inner class`关键字来定义内部类：
+
+```kotlin
+class Util {
+  inner class Utils {
+    
+  }
+}
+```
+
 ### 6.2 继承与构造函数
 
 Kotlin中的继承与Java不太一样，Kotlin中非抽象类默认都是不可被继承的，相当于Java中给类声明了final关键字。如果想要一个类被继承，需要添加open关键字，如下：
@@ -851,10 +861,13 @@ for ((fruit, number) in map) {
 
 ### 7.2 集合的函数式API
 
+#### 7.2.1 maxByOrNull
+
 ```kotlin
-// 使用函数式API找到单词最长的
+// 使用函数式API找到单词最长的,maxBy->根据我们传入的条件来遍历集合
 val list = listOf("Apple", "Banana", "Orange", "Pear")
-val maxLengthFruit = list.maxBy { it.length }
+val maxLengthFruit = list.maxByOrNull { it.length }
+=======
 ```
 
 首先看一下Lambda的定义，Lambda就是一小段可以作为参数传递的代码。语法结构如下：
@@ -864,3 +877,470 @@ val maxLengthFruit = list.maxBy { it.length }
 ```
 
 这是Lambda表达式最完整的语法结构定义。最外层是一对大括号，如果有参数传入到Lambda表达式中的话，我们还需要声明参数列表，参数列表的结尾使用一个->符号，表示参数列表的结束以及函数体的开始，函数体中可以编写任意行代码，并且最后一行代码会自动作为Lambda表达式的返回值。
+
+推导演示：
+
+```kotlin
+// 找出单词最长的
+val list = listOf("Apple", "Banana", "Orange", "Pear")
+// 原始Lambda格式
+val lambda = { fruit: String -> fruit.length }
+val maxLengthFruit = list.maxByOrNull(lambda)
+// 省去定义lambda变量
+val maxLengthFruit = list.maxByOrNull({ fruit: String -> fruit.length })
+// Kotlin规定，当Lambda参数是函数的最后一个参数时，可以将Lambda表达式移到函数括号外
+val maxLengthFruit = list.maxByOrNull() { fruit: String -> fruit.length }
+// Lambda参数是函数的唯一一个参数的话可省略括号
+val maxLengthFruit = list.maxByOrNull { fruit: String -> fruit.length }
+// Kotlin有类型推导机制，大多数情况下不必声明参数类型
+val maxLengthFruit = list.maxByOrNull { fruit -> fruit.length }
+// 且当Lambda表达式的参数列表中只有一个参数时，不必声明参数名，可用it关键字来代替
+val maxLengthFruit = list.maxByOrNull { it.length }
+```
+
+#### 7.2.2 map
+
+集合中的map函数用于将集合中的每个元素都映射成一个另外的值，映射的规则在Lambda表达式中指定，最终生成一个新的集合。
+
+```kotlin
+// 都变成大写模式
+val list = listOf<String>("Apple", "Gear", "Banana", "Pear")
+val newList = list.map {it.uppercase()}
+println("$newList")
+```
+
+#### 7.2.3 filter
+
+filter函数是用来过滤集合中的数据的，可单独使用也可配合其他函数一起使用
+
+```kotlin
+// 只保留单词长度大于4的且转全大写
+val list = listOf<String>("Apple", "Gear", "Banana", "Pear")
+val newList = list.filter { it.length > 4 }
+        					.map { it.uppercase() }
+```
+
+#### 7.2.4 any和all
+
+any函数用于判断集合中是否至少存在一个元素满足指定条件，all函数用于判断集合中是否所有元素都满足指定条件
+
+```kotlin
+val list = listOf<String>("Apple", "Gear", "Banana", "Pear", "Watermelon")
+val anyResult = list.any { it.length <= 5 } // true
+val allResult = list.all { it.length <= 5 } // false
+```
+
+### 7.3 Java函数式API使用
+
+Kotlin中调用Java方法时也可使用函数式API，只不过有一定条件限制。如果我们在Kotlin代码中调用一个Java方法，并且该方法只接收一个Java单抽象方法接口参数，就可以使用函数式API。Java单抽象方法接口指的是接口中只有一个待实现方法，如果接口中有多个待实现方法，则无法使用函数式API。
+
+```java
+public interface Runnable {
+  void run();
+}
+new Thread(new Runnable() {
+  @Override
+  public void run() {
+    
+  }
+}).start();
+```
+
+将上面代码翻译成Kotlin：Kotlin中匿名类的写法与Java有一点区别，由于Kotlin完全舍弃了new关键字，因此创建匿名类实例的时候就不能再使用new了，而是改用了object关键字。
+
+```kotlin
+Thread(objetc : Runnable() {
+  override fun run() {
+    
+  }
+}).start()
+// 精简代码
+Thread(Runnable() {
+  
+}).start()
+// 如果一个Java方法的参数列表中有且仅有一个Java单抽象方法接口参数，还可以将接口名省略
+Thread({
+  
+}).start
+// 当Lambda表达式是方法的最后一个参数时，可以将Lambda表达式移到方括号的外面，如果Lambda表达式还是方法的唯一参数时，可以将方法括号省略
+Thread {
+  
+}.start()
+```
+
+当我们调用Android SDK的接口时，很可能会用到这种写法：
+
+```kotlin
+button.setOnClickListener {
+  
+}
+```
+
+## 8. 标准函数和静态方法
+
+### 8.1 标准函数
+
+Kotlin的标准函数指的是Standard.kt文件中定义的函数，任何Kotlin代码都可以自由地调用所有的标准函数。
+
+#### 8.1.1 let
+
+let函数提供了函数式API的编程接口，并将原始调用对象作为参数传递到Lambda表达式中。
+
+```kotlin
+obj.let { obj2 ->
+  // 编写具体的业务逻辑
+}
+```
+
+可以看到，调用obj对象的let函数，然后lambda表达式中的代码就会立即执行，并且这个obj对象本身还会作为参数传递到Lambda表达式中。这里我们将参数名改为了obj2，但实际上他们是同一个对象，这就是let函数的作用。
+
+```kotlin
+fun doStudy(study: Study?) {
+  study?.readBooks()
+  study?.doHomework()
+}
+
+fun doStudy(study: Study?) {
+  study?.let { stu ->
+              stu.readBooks()
+              stu.doHomework()
+  }
+}
+```
+
+#### 8.1.2 with
+
+with函数接收两个参数：第一个参数可以是一个任意类型的对象，第二个参数是一个Lambda表达式。with函数会在Lambda表达式中提供第一个参数对象的上下文，并使用Lambda表达式中的最后一行代码作为返回值返回。
+
+```kotlin
+val result = with(obj) {
+  // obj的上下文
+  "value" // with函数的返回值
+}
+
+val list = listOf("Apple", "Gear", "Banana", "Pear", "Watermelon")
+val result = with(StringBuilder()) {
+  append("Start eating fruits.\n")
+  for (fruit in list) {
+    append(fruit).append("\n")
+  }
+  append("Eat all fruits.")
+  toString()
+}
+print(result)
+```
+
+上面这段代码给with函数的第一个参数传入了一个StringBuidler对象，那么接下来整个Lambda表达式的上下文就是这个对象。于是我们在Lambda表达式中就可以直接调用append()和toString()方法。Lambda表达式的最后一行会作为with函数的返回值返回。
+
+#### 8.1.3 run
+
+run函数的用法和使用场景和with函数类似。首先run函数通常不会直接调用，而是要在某个对象的基础上调用；其次run函数只接收一个Lambda参数，并且会在Lambda表达式中提供调用对象的上下文，也会使用Lambda表达式的最后一行作为返回值：
+
+```kotlin
+val list = listOf("Apple", "Gear", "Banana", "Pear", "Watermelon")
+val result = StringBuilder().run {
+  append("Start eating fruits \n")
+  for (fruit in list) {
+    append(fruit).append("\n")
+  }
+  append("Eat all fruits.")
+  toString()
+}
+println(result)
+```
+
+#### 8.1.4 apply
+
+apply函数和run函数也是极其类似的，都要在某个函数上调用，并且只接收一个Lambda函数，也会在Lambda表达式中提供调用对象的上下文，但是apply函数无法指定返回值，而是会自动返回调用对象本身：
+
+```kotlin
+val list = listOf("Apple", "Gear", "Banana", "Pear", "Watermelon")
+val result = StringBuilder().apply {
+  append("Start eating fruits \n")
+  for (fruit in list) {
+    append(fruit).append("\n")
+  }
+  append("Eat all fruits.")
+  toString()
+}
+println(result.toString())
+```
+
+#### 8.1.5 repeat
+
+repeat函数允许传入一个数值n，然后会把Lambda表达式中的内容执行n遍。
+
+```kotlin
+repeat(2) {
+  println("repeat")
+}
+```
+
+### 8.2 定义静态方法
+
+在Java中定义一个静态方法很简单，只需要在方法上声明一个static关键字就可以了：
+
+```java
+public class Util {
+  public static void doAction() {
+    //
+  }
+}
+```
+
+但是Kotlin中却极度弱化了静态方法的概念，想要在Kotlin中定义一个静态方法反倒不是一件容易的事情。因为Kotlin中提供了比静态方法更好用的语法特性，那就是单例类。
+
+```kotlin
+object Util {
+  fun doAction() {
+    //
+  }
+}
+```
+
+这里虽然doAction()方法并不是静态方法，但是我们仍可以使用Util.doAction()的方式来调用，这就是单例类所带来的便利性。不过使用单例类会使整个类的所有方法都变成类似于静态方法的调用方式，如果我们只想让类中一个方法呢？
+
+Kotlin中有一个新的语法结构`companion object`，所有定义在此结构中的方法都可以使用类似于Java静态方法的形式调用。
+
+```kotlin
+class Util {
+  fun doActionOne() {
+    //
+  }
+  
+  companion object {
+    fun doActionTwo() {
+      //
+    }
+  }
+}
+```
+
+不过doActionTwo()方法其实并不是静态方法，`companion object`关键字实际上会在Util类的内部创建一个伴生类，而doActionTwo()就是定义在这个伴生类里面的实际方法。只是Kotlin会保证Util类始终只会存在一个伴生类对象，因此调用`Uitl.doActionTwo()`方法实际上就是调用了Util类中伴生对象的doActionTwo方法。
+
+可以看出Kotlin中并没有直接定义静态方法的关键字，但是提供了一些语法特性来支持类似于静态方法调用的写法。
+
+如果需要真正的定义一个静态方法，Kotlin仍然提供了两种实现方式：注解和顶层方法。
+
+- 注解
+
+  前面两种方式都只是在语法形式上模仿了静态方法的调用形式，实际上他们都不是真正的静态方法。因此如果在Java代码中以静态方法的形式去调用的话，这些方法是不存在的。如果给单例类或者`companion object`中的方法加上`@JvmStatic`注解，那么Kotlin编译器就会将这些方法编译成真正的静态方法：
+
+  ```kotlin
+  class Util {
+    fun doAction1() {
+      //
+    }
+    
+    companion object {
+      @JvmStatic
+      fun doAction2() {
+        //
+      }
+    }
+  }
+  ```
+
+  注意，`@JvmStatic`注解只能加在单例类或者`companion object`中的方法上。
+
+- 顶层方法
+
+  顶层方法指的是那些没有定义在任何类中的方法，Kotlin中会将所有的顶层方法全部编译成静态方法，因此只要定义了顶层方法，那么他一定是静态方法。
+
+  新建一个Helper.kt文件，我们在这个文件中定义的任何方法都会是顶层方法。
+
+  ```kotlin
+  fun doSomething() {
+    //
+  }
+  ```
+
+  如果在Kotlin代码中调用的话，很简单，所有的顶层方法都可以在任何位置被直接调用，不用管包名路径，也不用创建实例。
+
+  如果在Java代码中调用，你会发现找不到doSomething()这个方法的，因为Java中没有顶层方法这个概念，所有的方法必须定义在类中。在Java中调用`Helper.doSomething()`。
+
+## 9. 延迟初始化和密封类
+
+### 9.1 对变量的延迟初始化
+
+```kotlin
+class MainActivity : AppCompatActivity(), View.OnClickListener {
+  
+  private var student: Student? = null
+  
+  override fun onCreate(savedInstanceState: Bundle?) {
+    student = Student()
+  }
+  
+  override fun onClick(view: View?) {
+    student?.doHomework()
+  }
+}
+```
+
+这里我们将student设置为了全局变量，但是它的初始化工作是在onCreate()方法中进行的，因此不得不先将student赋值为null，同时声明类型为可空。虽然我们会在onCreate()方法中对student进行初始化，同时确保onClick()方法必然在onCreate()方法之后才会调用，但是我们在onClick()方法中调用student的任何方法时仍然要进行判空处理才行，否则编译无法通过。
+
+当代码中有了大量的全局变量实例时，这个问题会越来越明显。可以通过对全局变量进行延迟初始化解决这个问题。
+
+延迟初始化使用的是`lateinit`关键字，它可以告诉编译器，我会晚些对这个变量进行初始化。
+
+```kotlin
+class MainActivity : AppCompatActivity(), View.OnClickListener {
+  
+  private lateinit var student: Student 
+  
+  override fun onCreate(savedInstanceState: Bundle?) {
+    student = Student()
+  }
+  
+  override fun onClick(view: View?) {
+    student.doHomework()
+  }
+}
+```
+
+当然，使用`lateinit`关键字也不是没有任何风险，如果我们在adapter变量还没有初始化的情况下就直接使用它，那么程序一定会崩溃，并且抛出一个UninitializedPropertyAccessException异常。
+
+所以当对一个全局变量使用了`lateinit`关键字时，请一定要确保它在被任何地方调用之前已经完成了初始化工作，否则Kotlin无法保证程序的安全性。另外可以通过代码来判断一个全局变量是否已完成了初始化，这样在某些时候能够有效地避免重复对某一个变量进行初始化操作。
+
+```kotlin
+class MainActivity : AppCompatActivity(), View.OnClickListener {
+  
+  private lateinit var student: Student 
+  
+  override fun onCreate(savedInstanceState: Bundle?) {
+    if (!::adapter.isInitialized) {
+      student = Student()
+    }
+  }
+}
+```
+
+### 9.2 使用密封类优化代码
+
+密封类的使用场景有很多，通常可以结合RecyclerView适配器中的ViewHolder一起使用。
+
+```kotlin
+// 新建Result.kt文件
+interface Result
+class Success(val msg: String) : Result
+class Failure(val errorMsg: String) : Result
+
+fun getResultMsg(result: Result) = when (result) {
+    is Success -> result.msg
+    is Failure -> result.errorMsg
+    else -> throw IllegalArgumentException()
+}
+```
+
+getResultMsg()方法中接收一个Result参数，我们通过when语句来判断：如果Result属于Success则返回成功消息，如果属于Failure则返回错误消息。但是Kotlin要求必须在添加else分支，否则编译器会认为缺少分支条件，代码无法编译通过。但实际Result的执行结果只可能是Success或者Failure，这个else分支永远走不到，所以我们抛出一个异常只是为了满足Kotlin编译器的语法检查而已。
+
+另外还有一个风险，如果我们新增一个Unknow类并实现Result接口，用于表示未知的执行结果，但是忘记在getResultMsg()方法中添加相应的条件分支，编译器在这种情况下是不会提醒我们的，而是走到else分支抛出异常导致程序崩溃。
+
+通过Kotlin的密封类可以很好地解决这个问题，它的关键字时`sealed class`：
+
+```kotlin
+sealed class Result
+class Success(val msg: String) : Result()
+class Failure(val errorMsg: String) : Result()
+
+fun getResultMsg(result: Result) = when (result) {
+    is Success -> result.msg
+    is Failure -> result.errorMsg
+}
+```
+
+当when语句中传入一个密封类变量作为条件时，Kotlin编译器会自动检查该密封类有哪些子类，并强制要求你将每个子类所对应的条件全部处理。这样可以保证即使没有编写else分支，也不会出现漏写条件分支的情况。如果此时我们新增一个Unknown类继承Result。此时getResultMsg()一定会报错，必须添加一个Unknown的条件分支才可以让代码编译通过。
+
+密封类及其所有子类只能定义在同一个文件的顶层位置，不能嵌套在其他类中，这是被密封类底层的实现机制所限制的。
+
+## 10. 扩展函数和运算符重载
+
+#### 10.1.1 扩展函数
+
+扩展函数表示即使不修改某个类的源码的情况下，仍然可以打开这个类，向该类添加新的函数，语法结构如下：
+
+```kotlin
+fun ClassName.methodName(param1: Int, param2: Int): Int {
+  return 0
+}
+```
+
+相比于定义一个普通的函数，定义扩展函数只需要在函数名的前面加一个`ClassName.`的语法结构，就表示将该函数添加到指定类当中。
+
+接下来我们向String类中添加一个扩展函数，向哪个类添加扩展函数就定义一个同名的Kotlin文件便于查找，并且定义成顶层方法，便于全局访问。
+
+```kotlin
+// 统计字符串中的字母数量
+fun String.lettersCount(): Int {
+    var count = 0
+    for (char in this) {
+        if (char.isLetter()) {
+            count++
+        }
+    }
+    return count
+}
+```
+
+#### 10.1.2 运算符重载
+
+Kotlin中的运算符重载允许我们让任意两个对象相加，或者进行更多其他的运算操作。
+
+运算符重载的关键字是`operator`关键字，只要在指定函数的前面加上就可以实现运算符重载的功能了。问题在于这个指定函数，这是运算符重载里比较复杂的问题，不同的运算符重载对应的重载函数也是不同的。以加号为例，重载语法结构：
+
+```kotlin
+class Obj {
+  operator fun plus(obj: Obj): Obj {
+    // 处理相加的逻辑
+  }
+}
+```
+
+接下来我们实现让两个Money对象相加：
+
+```kotlin
+class Money(private val value: Int) {
+  
+  operator fun plus(money: Money): Money {
+    val sum = value + money.value
+    return Money(sum)
+  }
+
+  operator fun plus(newValue: Int): Money {
+    val sum = newValue + value
+    return Money(sum)
+  }
+}
+
+val money1 = Money(5)
+val money2 = Money(10)
+val money3 = money1 + money2
+val money4 = money3 + 20
+println(money3.value) // 15
+println(money4.value) // 35
+```
+
+常用可重载运算符和关键字对应如下：
+
+| 语法糖表达式 |  实际调用函数  |
+| :----------: | :------------: |
+|    a + b     |   a.plus(b)    |
+|    a - b     |   a.minus(b)   |
+|    a * b     |   a.times(b)   |
+|    a / b     |    a.div(b)    |
+|    a % b     |    a.rem(b)    |
+|     a++      |    a.inc()     |
+|     a--      |    a.dec()     |
+|      +a      | a.unaryPlus()  |
+|      -a      | a.unaryMinus() |
+|      !a      |    a.not()     |
+|    a == b    |  a.equals(b)   |
+|    a > b     |                |
+|    a < b     |                |
+|    a >= b    |                |
+|    a <= b    | a.compareTo(b) |
+|     a..b     |  a.rangeTo(b)  |
+|     a[b]     |    a.get(b)    |
+|   a[b] = c   |  a.set(b, c)   |
+|    a in b    | b.contains(a)  |
