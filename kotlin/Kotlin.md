@@ -16,7 +16,7 @@ Kotlin的语法更加简洁，对于同样的功能，使用Kotlin开发的代�
 
 为了方便开发者快速体验Kotlin编程，JetBrains专门提供了一个可以在线运行Kotlin代码的网站，地址是：https://try.kotlinlang.org。但是在线运行Kotlin代码有一个很大的缺点，就是使用国内的网络访问这个网站特别慢，而且经常打不开。所以可以在Android Studio中直接运行Kotlin代码，在MainActivity所在的位置，创建一个kt文件，在kt文件中编写如下代码
 
-![alt](https://github.com/FanpingLi/Kotlin/raw/main/pic/1.png)
+![alt](../pic/1.png)
 
 这里的main就相当于Java中的main主函数，点击红框中的三角运行按钮即可直接运行Kotlin代码。
 
@@ -1256,7 +1256,7 @@ fun getResultMsg(result: Result) = when (result) {
 
 ## 10. 扩展函数和运算符重载
 
-#### 10.1.1 扩展函数
+### 10.1 扩展函数
 
 扩展函数表示即使不修改某个类的源码的情况下，仍然可以打开这个类，向该类添加新的函数，语法结构如下：
 
@@ -1283,7 +1283,7 @@ fun String.lettersCount(): Int {
 }
 ```
 
-#### 10.1.2 运算符重载
+### 10.2 运算符重载
 
 Kotlin中的运算符重载允许我们让任意两个对象相加，或者进行更多其他的运算操作。
 
@@ -1344,3 +1344,283 @@ println(money4.value) // 35
 |     a[b]     |    a.get(b)    |
 |   a[b] = c   |  a.set(b, c)   |
 |    a in b    | b.contains(a)  |
+
+## 11. 高阶函数
+
+### 11.1 定义高阶函数
+
+高阶函数与Lambda密不可分，函数式API如map、filter以及标准函数run、apply等都有一个共同的特点：他们都要求我们传入一个Lambda表达式作为参数。像这种接收Lambda参数的函数就可以称为具有函数式编程风格的API，如果想要定义自己的函数式API，就需要借助高阶函数来实现。
+
+高阶函数：如果一个函数接收另一个函数作为参数，或者返回值的类型是另一个函数，那么该函数就称为高阶函数。
+
+这涉及到函数类型的概念，Kotlin中除了一些基本的字段类型还增加了一个函数类型的概念。如果我们将这种函数类型添加到一个函数的参数生命或者返回值声明当中，这就是一个高阶函数。
+
+函数类型的定义规则：
+
+```kotlin
+(String, Int) -> Unit
+```
+
+->左边部分用来声明该函数接收什么参数的，多个参数之间使用逗号分隔开，如果不接收任何参数写一对空括号即可。
+
+->右边部分用于声明该函数的返回值是什么类型，如果没有返回值就使用Unit，大致相当于Java中的void。
+
+将上述函数类型添加到某个函数的参数声明或者返回值声明上，那么这个函数就是一个高阶函数：
+
+```kotlin
+fun example(fun: (String, Int) -> Unit) {
+  fun("hello", 123)
+}
+```
+
+高阶函数可以让函数类型的参数来决定函数的执行逻辑。
+
+```kotlin
+fun num1AndNum2(num1: Int, num2: Int, operation: (Int, Int) -> Int): Int {
+  val result = operation(num1, num2)
+  return result
+}
+```
+
+这是一个很简单的高阶函数，第三个参数是一个接收两个整型参数并且返回值也是整型的函数类型参数。函数中，我们没有进行任何操作，而是将num1和num2参数传给了第三个函数类型的参数获取它的返回值并返回。
+
+调用这个高阶函数我们还需要定义一个与其函数类型相比配的函数才行。
+
+```kotlin
+fun plus(num1: Int, num2: Int) : Int {
+    return num1 + num2
+}
+
+fun minus(num1: Int, num2: Int) : Int {
+    return num1 - num2
+}
+
+fun main() {
+  println(num1AndNum2(5, 3, ::minus)) // 2
+  println(num1AndNum2(5, 3, ::plus)) // 8
+}
+```
+
+`::plus`这是一种函数引用方式的写法，表示将plus()函数作为参数传递给num1AndNum2函数，函数内使用了传入的函数类型参数来决定具体的运算逻辑，因此实际上就是分别调用了plus和minus函数来对两个数字进行运算。
+
+上述写法有点麻烦，Kotlin还支持其他多种方式来调用函数，比如Lambda表达式、匿名函数、成员引用等。其中Lambda表达式是最常见也是最普遍的高阶函数调用方式。将上述代码使用Lambda表达式实现：
+
+```kotlin
+fun main() {
+  println(num1AndNum2(5, 3) { n1 , n2 -> n1 + n2 }) // 8
+  println(num1AndNum2(5, 3) { n1 , n2 -> n1 - n2 }) // 2
+}
+```
+
+这样看起来写法是不是精简了很多。接下来我们可以使用高阶函数模仿实现一个apply函数的功能。
+
+```kotlin
+fun StringBuilder.build(block: StringBuilder.() -> Unit): StringBuilder {
+    block()
+    return this
+}
+```
+
+这里我们给StringBuilder类定义了一个build扩展函数，这个扩展函数接收一个函数类型参数，并且返回值类型也是StringBuilder。
+
+在函数类型前面加上了一个StringBuilder.的语法结构。表示这个函数类型是定义在哪个类当中的。这里将函数类型定义到StringBuilder类中，当我们调用build函数时传入的Lambda表达式将会自动拥有StringBuilder的上下文。
+
+```kotlin
+fun main() {
+    val list = listOf("Apple", "Banana", "Orange", "Pear", "Grape")
+    val result = StringBuilder().build {
+        append("Start eating \n")
+        for (fruit in list) {
+            append(fruit).append("\n")
+        }
+        append("Eat all fruit")
+    }
+    println(result.toString())
+}
+```
+
+可以看到build函数的用法和apply函数基本上是一模一样的，只不过我们自己编写的build函数只能作用在StringBuilder类上面，而apply函数可以作用在所有类上，这需要借助Kotlin的泛型才行。
+
+### 11.2 内联函数
+
+编译时，会将内联函数中的代码直接复制到调用处，这就是内联函数。避免了调用方创建不必要的额外对象。
+
+Kotlin推荐在传入函数类型参数的函数上使用。
+
+```kotlin
+fun main() {
+    val num1 = 100
+    val num2 = 80
+    val result = num1AndNum2(num1, num2) { n1, n2 ->
+        n1 + n2
+    }
+}
+
+inline fun num1AndNum2(num1: Int, num2: Int, operation: (Int, Int) -> Int) :Int {
+    val result = operation(num1, num2)
+    return result
+}
+```
+
+上述代码在编译后，test方法体直接复制到main函数中
+
+```java
+public static void main(String[] var0) {
+   int num1 = 100;
+   int num2 = 80;
+   int $i$f$num1AndNum2 = false;
+   int var6 = false;
+   int result$iv = num1 + num2;
+}
+
+public static final int num1AndNum2(int num1, int num2, @NotNull Function2 operation) {
+   int $i$f$num1AndNum2 = 0;
+   Intrinsics.checkNotNullParameter(operation, "operation");
+   int result = ((Number)operation.invoke(num1, num2)).intValue();
+   return result;
+}
+
+// 未使用inline关键字
+public static void main(String[] var0) {
+  int num1 = 100;
+  int num2 = 80;
+  num1AndNum2(num1, num2, (Function2)null.INSTANCE);
+}
+
+public static final int num1AndNum2(int num1, int num2, @NotNull Function2 operation) {
+   Intrinsics.checkNotNullParameter(operation, "operation");
+   int result = ((Number)operation.invoke(num1, num2)).intValue();
+   return result;
+}
+```
+
+可以看到，未使用`inline`关键字，如果test频繁调用，则会产生很多不必要的额外INSTANCE。因此inline真正的优势是，修饰传入函数类型的函数，避免创建不必要的额外对象。当然，使用`inline`关键字也有一个缺点，如果在Lambda中调用return返回，可能导致`inline`之后的代码无法执行：
+
+```kotlin
+fun main() {
+  test {
+      println("main start")
+      return
+  }
+  println("main end") // #1
+}
+
+inline fun test(operation: () -> Unit) {
+    operation()
+    println("test") // #2
+}
+```
+
+上边代码运行后不会打印#1和#2，说明此处的代码被跳过了，所以在使用`inline`函数中包含Lambda静态式的时候要避免在Lambda中使用return，应该使用`return@test`的方式。
+
+### 11.3 noinline和crossinline
+
+如果一个高阶函数接收了两个或者更多函数类型的参数，这是我们给函数加上inline关键字，那么Kotlin编译器会自动将所有引用的Lambda表达式全部进行内联，如果我们只想内联其中一个就需要借助`noinline`关键字。
+
+```kotlin
+inline fun inlineTest(block1: () -> Unit, noinline block2: () -> Unit) {
+}
+```
+
+使用`crossinline`也可以限制上一节结束我们讲到`inline`函数的Lambda中如果包含`return`会导致流程被中断的问题，它与`noinline`的区别在于使用`crossinline`的Lambda仍然是内联的
+
+### 11.4 高阶函数的应用
+
+#### 11.4.1 SharedPreferences
+
+SharedPreferences的用法：
+
+```kotlin
+val editor = getSharedPreferences("data", Context.MODE_PRIVATE).edit()
+editor.putString("name", "Tom")
+editor.putInt("age", 28)
+editor.putBoolean("married", false)
+editor.apply()
+```
+
+使用高阶函数来简化：
+
+```kotlin
+fun SharedPreferences.open(block: SharedPreferences.Editor.() -> Unit) {
+  val editor = edit()
+  editor.block()
+  editor.apply()
+}
+
+fun main() {
+  // 使用
+  appContext.getSharedPreferences("data", Context.MODE_PRIVATE).open {
+    editor.putString("name", "Tom")
+    editor.putInt("age", 28)
+    editor.putBoolean("married", false)
+  }
+}
+```
+
+首先我们定义了一个SharedPreferences类的扩展函数open，并接收一个函数类型的参数，因此open函数式一个高阶函数。
+
+open函数内拥有SharedPreferences的上下文，因此直接调用edit()方法来获取SharedPreferences.Editor对象。另外接收的是一个函数类型参数，因此还必须调用editor.block()对函数参数进行调用，我们可以在函数类型参数的具体实现中添加数据了。最后调用apply()方法来提交数据，完成数据存储操作。
+
+> Google的KTX扩展库已经包函数上述SharedPreferences的简化用法（androidx.core:core-ktx:1.3.2）
+>
+> 不同的是将open函数换成了edit函数。
+
+#### 11.4.2 ContentValues
+
+前面[7.1章节](#7.1 集合创建与遍历)中mapOf()函数允许我们使用`"Apple" to 1`这样的语法结构快速创建键值对。Kotlin中使用`A to B`这样的语法结构会创建一个Pair对象。
+
+修改SQLite数据库数据时，一般用法如下：
+
+```kotlin
+val values = ContentValues()
+values.put("name", "Game of Thrones")
+values.put("author", "George Martin")
+values.put("pages", "720")
+values.put("price", 20.85)
+```
+
+优化后：
+
+```kotlin
+fun cvOf(vararg pairs: Pair<String, Any?>) = ContentValues().apply {
+    for (pair in pairs) {
+        val key = pair.first
+        when(val value = pair.second) {
+            is Int -> put(key, value)
+            is Long -> put(key, value)
+            is Short -> put(key, value)
+            is Float -> put(key, value)
+            is Double -> put(key, value)
+            is Boolean -> put(key, value)
+            is String -> put(key, value)
+            is Byte -> put(key, value)
+            is ByteArray -> put(key, value)
+            null -> putNull(key)
+        }
+    }
+}
+
+fun main() {
+    val values = cvOf("name" to "Game", "author" to "George", "pages" to 720, "price" to 20.85)
+}
+```
+
+因为apply函数返回值就是它的调用者对象本身，因此这里用等号替代返回值的声明，另外apply函数的Lambda表达式内自动拥有ContentValues的上下文，所以可以直接调用put方法。
+
+`cvOf()`方法接收了一个Pair参数，也就是使用`A to B`语法结构创建出来的参数类型，`vararg`关键字对应的是Java中的可变参数列表，允许向这个方法传入0~任意多个Pair类型的参数，这些参数都会被赋值到使用`vararg`声明的这个变量上，然后使用for-in循环可以将传入的所有参数遍历出来。Pair类型使用泛型来指定参数类型，`Any`相当于Java中的`Object`，是Kotlin中所有类的基类。
+
+另外when当中我们使用了Kotlin的Smart Cast功能，比如when语句进入Int条件分支后，条件下的value会被自动转换成Int类型，不再是Any?类型，就不需要向Java那样进行向下转型，这个功能在if中也同样适用。
+
+## 12. 泛型和委托
+
+### 12.1 泛型
+
+泛型
+
+定义泛型类：
+
+```kotlin
+```
+
+
+
