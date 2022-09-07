@@ -271,7 +271,7 @@ fun main() {
 }
 ```
 
-![alt](https://github.com/FanpingLi/Kotlin/raw/main/pic/3.3.1.png)
+![alt](../pic/3.3.1.png)
 
 很多时候双端闭区间不如单端闭区间好用，为什么呢？因为数组的下标都是以0开始的，一个数组长度为10的数组，它的下标范围是0-9，因此左闭右开的区间更常用。Kotlin中可以使用`until`关键字创建一个左闭右开区间，如下：
 
@@ -296,7 +296,7 @@ fun main() {
 上述代码表示在遍历[0, 10)这个区间的时候，每次执行循环都会在区间范围内递增2，相当于
 for-i循环中i = i + 2的效果。现在重新运行一下代码，结果如下图所示。
 
-![alt](https://github.com/FanpingLi/Kotlin/raw/main/pic/3.3.2.png)
+![alt](../pic/3.3.2.png)
 
 前面所学的`..`和`until`关键字都要求区间的左端必须小于右端，也就是区间都是一个升序，如果想创建一个降序的区间，可以使用downTo关键字：
 
@@ -310,7 +310,7 @@ fun main() {
 
 这里我们创建了一个[10, 1]的降序区间，运行结果如下：
 
-![alt](https://github.com/FanpingLi/Kotlin/raw/main/pic/3.3.3.png)
+![alt](../pic/3.3.3.png)
 
 另外，降序区间也是可以结合step关键字跳过区间中的一些元素的。
 
@@ -635,7 +635,7 @@ kotlin标准库提供了一些便利函数，使用这些内置函数，可以�
 ```kotlin
 fun main() {
     var number: Int? = null
-    
+
     try {
         checkOperation(number)
         number!!.plus(1)
@@ -662,7 +662,7 @@ class UnskilledException : IllegalArgumentException("操作不当")
 
 首先，我们创建一个Person类，右击com.lifp.kotlin.helloworld包->New->Kotlin File/Class，我们选择创建一个Class，具体如下图：
 
-![alt](https://github.com/FanpingLi/Kotlin/raw/main/pic/4.1.1.png)
+![alt](../pic/4.1.1.png)
 
 然后我们定义Person类的属性和方法：
 
@@ -671,7 +671,7 @@ class Person {
     // 这里使用var定义name和age是因为我们需要在创建对象之后再指定姓名和年龄
     var name = ""
     var age = 0
-    
+
     fun eat() {
         println(name + " is eating.He is " + age + " years old.")
     }
@@ -691,15 +691,15 @@ fun main() {
 
 这里将p对象的姓名赋值为Tom，年龄赋值为10，然后调用它的eat函数，运行结果如下图：
 
-![alt](https://github.com/FanpingLi/Kotlin/raw/main/pic/4.1.2.png)
+![alt](../pic/4.1.2.png)
 
 Kotlin中使用`inner class`关键字来定义内部类：
 
 ```kotlin
 class Util {
-  inner class Utils {
-    
-  }
+    inner class Utils {
+
+    }
 }
 ```
 
@@ -732,18 +732,18 @@ Kotlin中把构造函数分为了两种：主构造函数和次构造函数。�
 class Student(val sno: String, val grade: Int) : Person() {}
 // 如果需要在构造函数中编写一些逻辑,可在init结构体中编写
 class Student(val sno: String, val grade: Int) : Person() {
-  init {
-    println("sno is " + sno)
-    println("grade is " + grade)
-  }
+    init {
+        println("sno is " + sno)
+        println("grade is " + grade)
+    }
 }
 // 我们将Person类改造一下
 open class Person(name: String, age: Int) {
-  
+
 }
 // Student也需要修改
 class Student(sno: String, grade: Int, name: String, age: Int) : Person(name, age) {
-  
+
 }
 ```
 
@@ -751,8 +751,8 @@ Kotlin规定，一个类只能有一个主构造函数，但是可以有多个�
 
 ```kotlin
 class Student(val sno: String, val grade: Int, name: String, age: Int) : Person(name, age) {
-  constructor(name: String, age: Int) : this("", 0, name, age) {}
-  constructor() : this("", 0) {}
+    constructor(name: String, age: Int) : this("", 0, name, age) {}
+    constructor() : this("", 0) {}
 }
 ```
 
@@ -762,7 +762,7 @@ Kotlin也允许类中只有次构造函数，没有主构造函数。当一个�
 
 ```kotlin
 class Student : Person {
-  constructor(name: String, age: Int) : super(name, age)
+    constructor(name: String, age: Int) : super(name, age)
 }
 ```
 
@@ -782,27 +782,27 @@ Kotlin中的接口部分几乎与Java完全一致，也是单继承结构。
 
 ```kotlin
 interface Study {
-  fun readBooks()
-  fun doHomework()
+    fun readBooks()
+    fun doHomework()
 }
 
 class Student(name: String, age: Int) : Person(name, Int), Study {
-  override fun readBooks() {
-    println(name + "is reading")
-  }
-  
-  override fun doHomework() {
-    println(age + "is do homework")
-  }
+    override fun readBooks() {
+        println(name + "is reading")
+    }
+
+    override fun doHomework() {
+        println(age + "is do homework")
+    }
 }
 
 // 接口默认实现
 interface Study {
-  fun readBooks()
-  
-  fun doHomework() {
-    println("do homework default impl")
-  }
+    fun readBooks()
+
+    fun doHomework() {
+        println("do homework default impl")
+    }
 }
 ```
 
@@ -818,9 +818,9 @@ data class Cellphone(val brand: String, val price: Double)
 
 ```kotlin
 object Singleton {
-  fun singletonTest() {
-    println("singleton test is call")
-  }
+    fun singletonTest() {
+        println("singleton test is call")
+    }
 }
 ```
 
@@ -835,13 +835,13 @@ object Singleton {
 val list = listOf("Apple", "Banana", "Orange", "Pear")
 // 遍历集合
 for (fruit in list) {
-  println(fruit)
+    println(fruit)
 }
 // 创建可变集合
 val list = mutableListOf("Apple", "Banana", "Orange", "Pear")
 list.add("Grape")
 for (fruit in list) {
-  println(fruit)
+    println(fruit)
 }
 // 初始化set集合与List相似,即setOf、mutableSetOf
 ```
@@ -855,7 +855,7 @@ val number = map["Apple"]
 val map = mapOf("Apple" to 1, "Banana" to 2, "Orange" to 3)
 // 遍历Map集合
 for ((fruit, number) in map) {
-  println("fruit is" + fruit + ",number is" + number)
+    println("fruit is" + fruit + ",number is" + number)
 }
 ```
 
@@ -867,7 +867,6 @@ for ((fruit, number) in map) {
 // 使用函数式API找到单词最长的,maxBy->根据我们传入的条件来遍历集合
 val list = listOf("Apple", "Banana", "Orange", "Pear")
 val maxLengthFruit = list.maxByOrNull { it.length }
-=======
 ```
 
 首先看一下Lambda的定义，Lambda就是一小段可以作为参数传递的代码。语法结构如下：
@@ -917,7 +916,7 @@ filter函数是用来过滤集合中的数据的，可单独使用也可配合�
 // 只保留单词长度大于4的且转全大写
 val list = listOf<String>("Apple", "Gear", "Banana", "Pear")
 val newList = list.filter { it.length > 4 }
-        					.map { it.uppercase() }
+				.map { it.uppercase() }
 ```
 
 #### 7.2.4 any和all
@@ -936,13 +935,13 @@ Kotlin中调用Java方法时也可使用函数式API，只不过有一定条件�
 
 ```java
 public interface Runnable {
-  void run();
+    void run();
 }
 new Thread(new Runnable() {
-  @Override
-  public void run() {
-    
-  }
+    @Override
+    public void run() {
+
+    }
 }).start();
 ```
 
@@ -950,21 +949,21 @@ new Thread(new Runnable() {
 
 ```kotlin
 Thread(objetc : Runnable() {
-  override fun run() {
-    
-  }
+    override fun run() {
+
+    }
 }).start()
 // 精简代码
 Thread(Runnable() {
-  
+
 }).start()
 // 如果一个Java方法的参数列表中有且仅有一个Java单抽象方法接口参数，还可以将接口名省略
 Thread({
-  
+
 }).start
 // 当Lambda表达式是方法的最后一个参数时，可以将Lambda表达式移到方括号的外面，如果Lambda表达式还是方法的唯一参数时，可以将方法括号省略
 Thread {
-  
+
 }.start()
 ```
 
@@ -988,23 +987,23 @@ let函数提供了函数式API的编程接口，并将原始调用对象作为�
 
 ```kotlin
 obj.let { obj2 ->
-  // 编写具体的业务逻辑
-}
+         // 编写具体的业务逻辑
+        }
 ```
 
 可以看到，调用obj对象的let函数，然后lambda表达式中的代码就会立即执行，并且这个obj对象本身还会作为参数传递到Lambda表达式中。这里我们将参数名改为了obj2，但实际上他们是同一个对象，这就是let函数的作用。
 
 ```kotlin
 fun doStudy(study: Study?) {
-  study?.readBooks()
-  study?.doHomework()
+    study?.readBooks()
+    study?.doHomework()
 }
 
 fun doStudy(study: Study?) {
-  study?.let { stu ->
-              stu.readBooks()
-              stu.doHomework()
-  }
+    study?.let { stu ->
+                stu.readBooks()
+                stu.doHomework()
+               }
 }
 ```
 
@@ -1014,18 +1013,18 @@ with函数接收两个参数：第一个参数可以是一个任意类型的对�
 
 ```kotlin
 val result = with(obj) {
-  // obj的上下文
-  "value" // with函数的返回值
+    // obj的上下文
+    "value" // with函数的返回值
 }
 
 val list = listOf("Apple", "Gear", "Banana", "Pear", "Watermelon")
 val result = with(StringBuilder()) {
-  append("Start eating fruits.\n")
-  for (fruit in list) {
-    append(fruit).append("\n")
-  }
-  append("Eat all fruits.")
-  toString()
+    append("Start eating fruits.\n")
+    for (fruit in list) {
+        append(fruit).append("\n")
+    }
+    append("Eat all fruits.")
+    toString()
 }
 print(result)
 ```
@@ -1039,12 +1038,12 @@ run函数的用法和使用场景和with函数类似。首先run函数通常不�
 ```kotlin
 val list = listOf("Apple", "Gear", "Banana", "Pear", "Watermelon")
 val result = StringBuilder().run {
-  append("Start eating fruits \n")
-  for (fruit in list) {
-    append(fruit).append("\n")
-  }
-  append("Eat all fruits.")
-  toString()
+    append("Start eating fruits \n")
+    for (fruit in list) {
+        append(fruit).append("\n")
+    }
+    append("Eat all fruits.")
+    toString()
 }
 println(result)
 ```
@@ -1056,12 +1055,12 @@ apply函数和run函数也是极其类似的，都要在某个函数上调用，
 ```kotlin
 val list = listOf("Apple", "Gear", "Banana", "Pear", "Watermelon")
 val result = StringBuilder().apply {
-  append("Start eating fruits \n")
-  for (fruit in list) {
-    append(fruit).append("\n")
-  }
-  append("Eat all fruits.")
-  toString()
+    append("Start eating fruits \n")
+    for (fruit in list) {
+        append(fruit).append("\n")
+    }
+    append("Eat all fruits.")
+    toString()
 }
 println(result.toString())
 ```
@@ -1072,7 +1071,7 @@ repeat函数允许传入一个数值n，然后会把Lambda表达式中的内容�
 
 ```kotlin
 repeat(2) {
-  println("repeat")
+    println("repeat")
 }
 ```
 
@@ -1082,9 +1081,9 @@ repeat(2) {
 
 ```java
 public class Util {
-  public static void doAction() {
-    //
-  }
+    public static void doAction() {
+        //
+    }
 }
 ```
 
@@ -1092,9 +1091,9 @@ public class Util {
 
 ```kotlin
 object Util {
-  fun doAction() {
-    //
-  }
+    fun doAction() {
+        //
+    }
 }
 ```
 
@@ -1104,15 +1103,15 @@ Kotlin中有一个新的语法结构`companion object`，所有定义在此结�
 
 ```kotlin
 class Util {
-  fun doActionOne() {
-    //
-  }
-  
-  companion object {
-    fun doActionTwo() {
-      //
+    fun doActionOne() {
+        //
     }
-  }
+
+    companion object {
+        fun doActionTwo() {
+            //
+        }
+    }
 }
 ```
 
@@ -1128,16 +1127,16 @@ class Util {
 
   ```kotlin
   class Util {
-    fun doAction1() {
-      //
-    }
-    
-    companion object {
-      @JvmStatic
-      fun doAction2() {
-        //
+      fun doAction1() {
+          //
       }
-    }
+  
+      companion object {
+          @JvmStatic
+          fun doAction2() {
+              //
+          }
+      }
   }
   ```
 
@@ -1151,7 +1150,7 @@ class Util {
 
   ```kotlin
   fun doSomething() {
-    //
+      //
   }
   ```
 
@@ -1165,16 +1164,16 @@ class Util {
 
 ```kotlin
 class MainActivity : AppCompatActivity(), View.OnClickListener {
-  
-  private var student: Student? = null
-  
-  override fun onCreate(savedInstanceState: Bundle?) {
-    student = Student()
-  }
-  
-  override fun onClick(view: View?) {
-    student?.doHomework()
-  }
+
+    private var student: Student? = null
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        student = Student()
+    }
+
+    override fun onClick(view: View?) {
+        student?.doHomework()
+    }
 }
 ```
 
@@ -1186,16 +1185,16 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
 ```kotlin
 class MainActivity : AppCompatActivity(), View.OnClickListener {
-  
-  private lateinit var student: Student 
-  
-  override fun onCreate(savedInstanceState: Bundle?) {
-    student = Student()
-  }
-  
-  override fun onClick(view: View?) {
-    student.doHomework()
-  }
+
+    private lateinit var student: Student 
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        student = Student()
+    }
+
+    override fun onClick(view: View?) {
+        student.doHomework()
+    }
 }
 ```
 
@@ -1205,14 +1204,14 @@ class MainActivity : AppCompatActivity(), View.OnClickListener {
 
 ```kotlin
 class MainActivity : AppCompatActivity(), View.OnClickListener {
-  
-  private lateinit var student: Student 
-  
-  override fun onCreate(savedInstanceState: Bundle?) {
-    if (!::adapter.isInitialized) {
-      student = Student()
+
+    private lateinit var student: Student 
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        if (!::adapter.isInitialized) {
+            student = Student()
+        }
     }
-  }
 }
 ```
 
@@ -1262,7 +1261,7 @@ fun getResultMsg(result: Result) = when (result) {
 
 ```kotlin
 fun ClassName.methodName(param1: Int, param2: Int): Int {
-  return 0
+    return 0
 }
 ```
 
@@ -1291,9 +1290,9 @@ Kotlin中的运算符重载允许我们让任意两个对象相加，或者进�
 
 ```kotlin
 class Obj {
-  operator fun plus(obj: Obj): Obj {
-    // 处理相加的逻辑
-  }
+    operator fun plus(obj: Obj): Obj {
+        // 处理相加的逻辑
+    }
 }
 ```
 
@@ -1301,16 +1300,16 @@ class Obj {
 
 ```kotlin
 class Money(private val value: Int) {
-  
-  operator fun plus(money: Money): Money {
-    val sum = value + money.value
-    return Money(sum)
-  }
 
-  operator fun plus(newValue: Int): Money {
-    val sum = newValue + value
-    return Money(sum)
-  }
+    operator fun plus(money: Money): Money {
+        val sum = value + money.value
+        return Money(sum)
+    }
+
+    operator fun plus(newValue: Int): Money {
+        val sum = newValue + value
+        return Money(sum)
+    }
 }
 
 val money1 = Money(5)
@@ -1369,7 +1368,7 @@ println(money4.value) // 35
 
 ```kotlin
 fun example(fun: (String, Int) -> Unit) {
-  fun("hello", 123)
+    fun("hello", 123)
 }
 ```
 
@@ -1377,8 +1376,8 @@ fun example(fun: (String, Int) -> Unit) {
 
 ```kotlin
 fun num1AndNum2(num1: Int, num2: Int, operation: (Int, Int) -> Int): Int {
-  val result = operation(num1, num2)
-  return result
+    val result = operation(num1, num2)
+    return result
 }
 ```
 
@@ -1396,8 +1395,8 @@ fun minus(num1: Int, num2: Int) : Int {
 }
 
 fun main() {
-  println(num1AndNum2(5, 3, ::minus)) // 2
-  println(num1AndNum2(5, 3, ::plus)) // 8
+    println(num1AndNum2(5, 3, ::minus)) // 2
+    println(num1AndNum2(5, 3, ::plus)) // 8
 }
 ```
 
@@ -1407,8 +1406,8 @@ fun main() {
 
 ```kotlin
 fun main() {
-  println(num1AndNum2(5, 3) { n1 , n2 -> n1 + n2 }) // 8
-  println(num1AndNum2(5, 3) { n1 , n2 -> n1 - n2 }) // 2
+    println(num1AndNum2(5, 3) { n1 , n2 -> n1 + n2 }) // 8
+    println(num1AndNum2(5, 3) { n1 , n2 -> n1 - n2 }) // 2
 }
 ```
 
@@ -1466,31 +1465,31 @@ inline fun num1AndNum2(num1: Int, num2: Int, operation: (Int, Int) -> Int) :Int 
 
 ```java
 public static void main(String[] var0) {
-   int num1 = 100;
-   int num2 = 80;
-   int $i$f$num1AndNum2 = false;
-   int var6 = false;
-   int result$iv = num1 + num2;
+    int num1 = 100;
+    int num2 = 80;
+    int $i$f$num1AndNum2 = false;
+    int var6 = false;
+    int result$iv = num1 + num2;
 }
 
 public static final int num1AndNum2(int num1, int num2, @NotNull Function2 operation) {
-   int $i$f$num1AndNum2 = 0;
-   Intrinsics.checkNotNullParameter(operation, "operation");
-   int result = ((Number)operation.invoke(num1, num2)).intValue();
-   return result;
+    int $i$f$num1AndNum2 = 0;
+    Intrinsics.checkNotNullParameter(operation, "operation");
+    int result = ((Number)operation.invoke(num1, num2)).intValue();
+    return result;
 }
 
 // 未使用inline关键字
 public static void main(String[] var0) {
-  int num1 = 100;
-  int num2 = 80;
-  num1AndNum2(num1, num2, (Function2)null.INSTANCE);
+    int num1 = 100;
+    int num2 = 80;
+    num1AndNum2(num1, num2, (Function2)null.INSTANCE);
 }
 
 public static final int num1AndNum2(int num1, int num2, @NotNull Function2 operation) {
-   Intrinsics.checkNotNullParameter(operation, "operation");
-   int result = ((Number)operation.invoke(num1, num2)).intValue();
-   return result;
+    Intrinsics.checkNotNullParameter(operation, "operation");
+    int result = ((Number)operation.invoke(num1, num2)).intValue();
+    return result;
 }
 ```
 
@@ -1498,11 +1497,11 @@ public static final int num1AndNum2(int num1, int num2, @NotNull Function2 opera
 
 ```kotlin
 fun main() {
-  test {
-      println("main start")
-      return
-  }
-  println("main end") // #1
+    test {
+        println("main start")
+        return
+    }
+    println("main end") // #1
 }
 
 inline fun test(operation: () -> Unit) {
@@ -1542,18 +1541,18 @@ editor.apply()
 
 ```kotlin
 fun SharedPreferences.open(block: SharedPreferences.Editor.() -> Unit) {
-  val editor = edit()
-  editor.block()
-  editor.apply()
+    val editor = edit()
+    editor.block()
+    editor.apply()
 }
 
 fun main() {
-  // 使用
-  appContext.getSharedPreferences("data", Context.MODE_PRIVATE).open {
-    editor.putString("name", "Tom")
-    editor.putInt("age", 28)
-    editor.putBoolean("married", false)
-  }
+    // 使用
+    appContext.getSharedPreferences("data", Context.MODE_PRIVATE).open {
+        editor.putString("name", "Tom")
+        editor.putInt("age", 28)
+        editor.putBoolean("married", false)
+    }
 }
 ```
 
@@ -1615,12 +1614,62 @@ fun main() {
 
 ### 12.1 泛型
 
-泛型
+泛型主要有两种定义方式：泛型类和泛型方法，一般使用<T>。
 
 定义泛型类：
 
 ```kotlin
+class MyClass<T> {
+
+    fun method(param: T): T {
+        return param
+    }
+}
+
+//使用
+val myClass = MyClass<int>()
+val result = myClass.method(123)
 ```
 
+定义泛型方法：
 
+```kotlin
+class MyClass {
+
+    fun <T> method(param: T): T {
+        return param
+    }
+}
+
+//使用
+val myClass = MyClass()
+val result = myClass.method<Int>(123)
+```
+
+Kotlin允许我们对泛型的类型进行限制。比如我们对泛型限制为Number类型：
+
+```kotlin
+fun <T : Number> method(param: T): T {
+    return param
+}
+```
+
+这种写法表明，我们只能将method方法的泛型制定成数字类型，比如Int、Double、Float等。
+
+默认情况下，所有的泛型可以指定成可空类型的，这是因为在不手动指定上界的时候，泛型的上界默认是Any?。如果不想让泛型的上界手动指定成Any就可以了。
+
+接下来我们改造一下之前写的build函数，让build函数可以在所有类上使用：
+
+```kotlin
+fun <T> T.build(block: T.() -> Unit): T {
+    block()
+    return this
+}
+```
+
+### 12.2 类委托和委托属性
+
+委托是一种设计模式，核心理念：操作对象自己不会去处理某段逻辑，而是会把工作委托给另外一个辅助对象去处理。
+
+Kotlin中将委托分为了两种：类委托和委托属性。
 
