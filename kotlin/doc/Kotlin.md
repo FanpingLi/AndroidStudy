@@ -1440,6 +1440,39 @@ fun main() {
 
 可以看到build函数的用法和apply函数基本上是一模一样的，只不过我们自己编写的build函数只能作用在StringBuilder类上面，而apply函数可以作用在所有类上，这需要借助Kotlin的泛型才行。
 
+```kotlin
+class Dependency {
+    val librarys = ArrayList<String>()
+
+    fun implementation(string: String) {
+        librarys.add(string)
+    }
+}
+
+fun dependencies(block: Dependency.() -> Unit): List<String> {
+    val dependency = Dependency()
+    dependency.block()
+    return dependency.librarys
+}
+
+fun main() {
+    // Java式写法
+    dependencies(object : (Dependency) -> Unit {
+        override fun invoke(p1: Dependency) {
+            p1.implementation("hhh")
+            p1.implementation("ssssffffff")
+        }
+
+    }).apply { println(this) }
+    
+    // 上述代码通过Lambda简化后
+    dependencies { 
+        implementation("hhh")
+        implementation("ssssffffff")
+    }.apply { println(this) }
+}
+```
+
 ### 11.2 内联函数
 
 编译时，会将内联函数中的代码直接复制到调用处，这就是内联函数。避免了调用方创建不必要的额外对象。
@@ -1672,4 +1705,741 @@ fun <T> T.build(block: T.() -> Unit): T {
 委托是一种设计模式，核心理念：操作对象自己不会去处理某段逻辑，而是会把工作委托给另外一个辅助对象去处理。
 
 Kotlin中将委托分为了两种：类委托和委托属性。
+
+#### 12.2.1 类委托
+
+将一个类的具体实现委托给另一个类去完成。写法如下：
+
+```kotlin
+class MySet<T>(private val helperSet: HashSet<T>) : Set<T> by helperSet {
+
+    fun helloWord() = println("hello word")
+
+    override fun isEmpty() = false
+}
+```
+
+新增了一个helloWord方法，并重写了isEmpty方法，使其返回值永远为false。
+
+#### 12.2.2 属性委托
+
+委托属性的核心思想是将一个属性（字段）的具体实现委托给另一个类去完成。
+
+```kotlin
+class MyClass {
+    val p by Delegate()
+}
+```
+
+属性p的具体实现委托给了Delegate类去完成。当调用p属性的会自动调用Delegate类的getValue()方法，当给p属性赋值时会自动调用Delegate的setValue()方法。因此我们还需要对Delegate类进行具体实现：
+
+```kotlin
+class Delegate {
+    private var propValue: Any? = null
+
+    operator fun getValue(myClass: MyClass, prop: KProperty<*>): Any? {
+        return propValue
+    }
+
+    operator fun setValue(myClass: MyClass, prop: KProperty<*>, value: Any?) {
+        propValue = value
+    }
+}
+```
+
+这是一种标准的代码实现模板，在Delegate类中我们必须实现getValue()和setValue()这两个方法，并且用operator关键字进行声明。
+
+getValue()方法接收两个参数：
+
+第一个参数用于声明该Delegate类的委托功能可以在哪些类中使用；
+
+第二个参数KProperty<*>是Kotlin中的一个属性操作类，可以获取各种属性值，在当前场景下用不着，但是必须在方法参数上进行声明。
+
+setValue()方法类似，不过需要接收三个参数：
+
+前两个与getValue()方法相同，最后一个参数表示具体要赋值给委托属性的值，这个参数的类型必须和getValue()方法返回值的类型保持一致。
+
+有一种特殊情况，如果p属性是用val关键字声明的，那么在Delegate类中就不需要实现setValue()方法。
+
+#### 12.2.3 委托功能应用
+
+首先介绍下Kotlin中的懒加载技术。把想要延迟执行的代码放到by lazy代码块中，这样代码块中的代码一开始不会执行，只有当变量被首次调用的时候才会执行。基本语法结构如下：
+
+```kotlin
+val p by lazy { ... }
+```
+
+通过学习委托，实现上，by lazy并不是连在一起的关键字，只有by是关键字，lazy在这里是一个高阶函数。在lazy函数中会创建并返回一个Delegate对象，当我们调用p属性的时候，其实调用的是Delegate对象的getValue()方法，然后getValue()方法中又会调用lazy函数传入的Lambda表达式，这样表达式中的代码就可以得到执行了，并且调用p属性后得到的值就是Lambda表达式最后一行代码的返回值。
+
+接下来我们实现一个自己的lazy函数。
+
+```kotlin
+class Later<T>(val block: () -> T) {
+    private var value: Any? = null;
+
+    operator fun getValue(any: Any?, prop: KProperty<*>): T {
+        if (value == null) {
+            value = block()
+        }
+        return this.value as T
+    }
+}
+```
+
+定义了一个Later类，指定成泛型类，接收一个函数类型参数，返回值为Later类指定的泛型。并在Later类中实现了getValue()方法。
+
+由于懒加载技术是不会对属性进行赋值的，因此不需要实现setValue()方法。
+
+为了我们使用方便，我们将其定义成一个顶层函数。
+
+```kotlin
+fun <T> later(block: () -> T) = Later(block)
+```
+
+接下来我们验证一下：
+
+```kotlin
+fun main() {
+    val p by later {
+        println("初始化")
+        "hahah"
+    }
+    println("later")
+    println("start ->" + p.length)
+}
+// 运行结果
+later
+初始化
+start ->5
+```
+
+可以看到，先打印的later，然后当调用p的时候打印了懒加载的log。
+
+## 13. infix函数
+
+A to B 构建键值对，mapOf()函数等，此类语法结构可读性高，但是是如何实现的呢？
+
+首先to并不是Kotlin语言中的一个关键字，之所以我们可以使用此类语法结构是因为Kotlin提供了一种高级语法糖特性：infix函数。
+
+把变成语言函数调用的语法规则调整了一下，比如A to B，实际等价于A.to(B)的写法。
+
+infix函数语法规则如下：
+
+```kotlin
+infix fun String.beginWith(prefix: String) = startsWith(prefix)
+```
+
+infix关键字允许我们将函数调用时的小数点、括号等计算机相关的语法去掉，从而使用一种更接近英语的语法来编写程序，让代码看起来更加具有可读性。
+
+infix函数由于其语法糖格式的特性，有两个比较严格的限制：首先，infix函数是不能定义成顶层函数的，它必须是某个类的成员函数，可以使用扩展函数的方式将其定义到某个类当中；其次，infix函数必须接收且只能接收一个参数，至于参数类型是没有限制的。
+
+只有同时满足这两点，infix函数的语法糖才具备使用的条件。
+
+```kotlin
+infix fun <T> Collection<T>.has(element: T) = contains(element)
+```
+
+可以看到，我们给Collection接口添加了一个扩展函数，这样所有集合的子类就都可以使用这个函数了。
+
+## 14. 泛型的高级特性
+
+### 14.1 对泛型进行实化
+
+Java中并没有泛型实化这个概念，想要理解要先清楚Java的泛型擦除机制。
+JDK1.5之前，没有泛型概念，List可以存储任何类型的数据，这样导致取出数据的时候需要向下转型，很危险。
+
+1.5之后引入了泛型功能，实际上使用过泛型擦除机制来实现的。泛型对于类型的约束只在编译器存在，运行的时候还是1.5之前的机制来运行，JVM是识别不到我们在代码中指定的泛型类型。所有基于JVM的语言，它们的泛型功能都是通过类擦除机制来实现的。
+
+Kotlin提供了一个内联函数的概念，内联函数中的代码会在编译的时候自动被替换到调用它的地方，这样也就不存在什么泛型擦除的问题了，因为代码在编译之后会直接使用实际的类型来替代内联函数中的泛型生命。这就意味着Kotlin中是可以将内联函数中的泛型进行实化的。
+
+要求：必须是内联函数，用inline关键字修饰。其次，在声明泛型的地方必须加上reified关键字来表示泛型要进行实化。
+
+```kotlin
+inline fun <reified T> getGenericType() {
+}
+```
+
+接下来我们实现一个功能，获取泛型实际类型的方法：
+
+```kotlin
+inline fun <reified T> getGenericType() = T::class.java
+
+fun main() {
+    println(getGenericType<String>())  // class java.lang.String
+    println(getGenericType<Int>())     // class java.lang.Integer
+    println(getGenericType<Boolean>()) // class java.lang.Boolean
+}
+```
+
+### 14.2 泛型实化的应用
+
+泛型实化功能允许我们在泛型函数中获得泛型的实际类型，这也就使得类似于a is T、T::class.java这样的语法成为了可能。
+
+比如，我们启动一个Activity要这么写：
+
+```kotlin
+val intent = Intent(context, MainActivity::class.java)
+startActivity(intent)
+```
+
+有了泛型实例化后我们就可以简化写法：
+
+```kotlin
+inline fun <reified T> startActivity(context: Context) {
+    val intent = Intent(context, T::class.java);
+    context.startActivity(intent)
+}
+
+startActivity<MainActivity>(context)
+```
+
+有时候我们也需要传递一些参数，我们只需要借助高阶函数就可以实现：
+
+```kotlin
+inline fun <reified T> startActivity(context: Context, block: Intent.() -> Unit) {
+    val intent = Intent(context, T::class.java)
+    intent.block()
+    context.startActivity(intent)
+}
+
+startActivity<MainActivity>(context) {
+    intent.putExtra("key", "value")
+}
+```
+
+### 14.3 泛型的协变
+
+学习之前，需要先了解一个约定：一个泛型类或者泛型接口中的方法， 它的参数列表是接收数据的地方，因此可以称它为in位置，而它的返回值是输出数据的地方，因此可以称它为out位置。
+
+```kotlin
+open class Person(val name: String, val age: Int)
+class Student(name: String, age: Int) : Person(name, age)
+class Teacher(name: String, age: Int) : Person(name, age)
+
+class SimpleData<T> {
+    private var data: T? = null
+
+    fun set(t: T?) {
+        data = t
+    }
+
+    fun get(): T? {
+        return data
+    }
+}
+
+fun main() {
+    val student = Student("lifp", 1)
+    val data = SimpleData<Student>()
+    data.set(student)
+
+    handleSimpleData(data) // 提示报错
+}
+
+fun handleSimpleData(data: SimpleData<Person>) {
+    val teacher = Teacher("Jack", 35)
+    data.set(teacher)
+}
+```
+
+Student和Teacher是Person的子类，我们定义了一个SimpleData泛型类，可以通过set和get设置和获取值，并定义了一个handleSimpleData方法接收一个SimpleData\<Person>参数。
+
+我们在main方法中创建了一个SimpleData\<Student>对象将其传递给handleSimpleData()方法，假设不报错，可以通过编译，那么我们调用SimpleDat\<Student>去get获取封装的数据时，它实际包含的是一个Teacher的实例，那么此时必然会产生类型转换异常。
+
+所以Java种是不允许使用这种方式来传递参数的。
+
+通过回顾代码，我们可以确认，问题发生的原因是我们在handleSimpleData方法中设置了一个Teacher的实例，如果SimpleData在泛型T上是只读的话，那就没有类型转换的安全隐患了。
+
+协变：如果A是B的子类，同时Generic\<A>也是Generic\<B>的子类，这就是协变。
+
+```kotlin
+class SimpleData<out T>(val data: T?) {
+    fun get(): T? {
+        return data
+    }
+}
+```
+
+我们在泛型T的声明前加了一个out关键字，这就意味着T只能出现在out的位置上，而不能出现在in的位置上，也就意味着SimpleData在泛型T上是协变的。
+
+```kotlin
+fun main() {
+    val student = Student("lifp", 1)
+    val data = SimpleData<Student>()
+
+    handleSimpleData(data)
+}
+
+fun handleSimpleData(data: SimpleData<Person>) {
+    val person = data.get()
+}
+```
+
+此时代码可以正常的编译通过了。Kotlin中已经给许多内置的API加上了协变声明，其中就包括各种集合的类和接口。比如一个方法接收一个List\<Person>类型的参数，而传入的是一个List\<Student>的实例，在Java中是不允许这么做的，但是Kotlin中可以。我们可以看一下List的源码：
+
+```kotlin
+public interface List<out E> : Collection<E> {
+    // Query Operations
+
+    override val size: Int
+    override fun isEmpty(): Boolean
+    override fun contains(element: @UnsafeVariance E): Boolean
+    override fun iterator(): Iterator<E>
+
+    // Bulk Operations
+    override fun containsAll(elements: Collection<@UnsafeVariance E>): Boolean
+    
+    // .....
+}
+```
+
+可以看到，List使用了out关键字修饰泛型E，说明List在泛型E上是协变的。
+
+### 14.4 泛型的逆变
+
+逆变的定义与协变完全相反：如果A是B的子类，同时Generic\<B>也是Generic\<A>的子类，这就是逆变。
+
+```kotlin
+interface Transformer<T> {
+    fun transform(t: T) : String
+}
+
+fun main() {
+    val trans = object : Transformer<Person> {
+        override fun transform(t: Person): String {
+            return "${t.name} ${t.age}"
+        }
+    }
+    handleTransformer(trans) // 提示报错
+}
+
+fun handleTransformer(trans: Transformer<Student>) {
+    val student = Student("Tom", 19)
+    val result = trans.transform(student)
+}
+```
+
+首先我们在main()方法中编写了一个Transformer\<Person>的匿名类实现，并通过 transform()方法将传入的Person对象转换成了一个“姓名+年龄”拼接的字符串。而 handleTransformer()方法接收的是一个Transformer\<Student>类型的参数，这里在 handleTransformer()方法中创建了一个Student对象，并调用参数的transform()方法 将Student对象转换成一个字符串。
+
+这段代码从安全的角度来分析是没有任何问题的，因为Student是Person的子类，使用 Transformer\<Person>的匿名类实现将Student对象转换成一个字符串也是绝对安全的，并 不存在类型转换的安全隐患。但是实际上，在调用handleTransformer()方法的时候却会提 示语法错误，原因也很简单，Transformer\<Person>并不是Transformer\<Student>的子 类型。
+
+这个时候逆变就可以解决这个问题：
+
+```kotlin
+interface Transformer<in T> {
+    fun transform(t: T) : String
+}
+```
+
+这里我们在泛型T的声明前面加上了一个in关键字。这就意味着现在T只能出现在in位置上，而不能出现在out位置上，同时也意味着Transformer在泛型T上是逆变的。
+
+我们假设逆变允许T出现在out位置上，修改代码如下：
+
+```kotlin
+interface Transformer<in T> {
+    fun transform(name: String, age: Int): @UnsafeVariance T
+}
+
+fun main() {
+    val trans = object : Transformer<Person> {
+        override fun transform(name: String, age: Int): Person {
+            return Teacher(name, age)
+        }
+    }
+    handleTransformer(trans)
+}
+fun handleTransformer(trans: Transformer<Student>) {
+    val result = trans.transform("Tom", 19)
+}
+```
+
+上述代码就是一个典型的违反逆变规则而造成类型转换异常的例子。在 Transformer\<Person>的匿名类实现中，我们使用transform()方法中传入的name和age 参数构建了一个Teacher对象，并把这个对象直接返回。由于transform()方法的返回值要求 是一个Person对象，而Teacher是Person的子类，因此这种写法肯定是合法的。
+
+但在handleTransformer()方法当中，我们调用了Transformer\<Student>的 transform()方法，并传入了name和age这两个参数，期望得到的是一个Student对象的返 回，然而实际上transform()方法返回的却是一个Teacher对象，因此这里必然会造成类型转 换异常。
+
+Kotlin在提供协变和逆变功能时，就已经把各种潜在的类型转换安全隐患全部考虑进 去了。只要我们严格按照其语法规则，让泛型在协变时只出现在out位置上，逆变时只出现在in 位置上，就不会存在类型转换异常的情况。
+
+>协变和逆变相关博文：
+>https://juejin.cn/post/6847902219140857870
+>
+>https://juejin.cn/post/6844903929734496263
+
+## 15. 协程
+
+什么是协程？协程其实和线程类似，可以理解为一个轻量级的线程。我们之前学的线程是需要依赖操作系统的调度才能实现不同线程之间的切换，而协程仅可以在编程语言的层面就可以实现不同协程之间的切换。
+
+### 15.1 协程的基本用法
+
+使用协程功能需要导入依赖：
+
+```groovy
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.1.1"
+// Android项目需导入
+implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.1.1"
+```
+
+#### 15.1.1 GlobalScope.launch
+
+GlobalScope.launch函数可以创建一个协程作用域，launch代码块内的代码就是运行在协程中的。通过此种方式创建的是一个顶级协程，当应用程序结束时也会跟着一起结束。
+
+```kotlin
+fun main() {
+    GlobalScope.launch { 
+        println("start run")
+    }
+}
+```
+
+此时我们运行代码，发现并没有任何输出，因为main方法已经结束了，代码块中的代码还没来得及执行。我们可以让主程序阻塞1s。
+
+```kotlin
+fun main() {
+    GlobalScope.launch { 
+        println("start run")
+    }
+    Thread.sleep(1000)
+}
+```
+
+这个时候我们再运行代码就可以看到对应的输出了。当然，这样是存在问题的，如果协程中的代码块1s内执行不完，就会被强制中断。比如：
+
+```kotlin
+fun main() {
+    GlobalScope.launch { 
+        println("start run")
+        delay(1500)
+        println("start run end")
+    }
+    Thread.sleep(1000)
+}
+```
+
+运行这段代码，发现第二个打印并没有出现在控制台上。这里我们使用了一个delay函数。
+
+> - delay 函数是一个非阻塞式挂起函数，它可以让当前协程延迟到指定的时间执行，且只能在协程的作用域或者其他挂起函数中调用
+> - 对比 Thread.sleep() 函数，delay 函数只会挂起当前协程，并不会影响其他协程的运行，而 Thread.sleep() 函数会阻塞当前线程，那么该线程下的所有协程都会被阻塞
+
+那么有办法可以让协程中的所有代码都执行完之后再结束吗？有的，那就是使用runBlocking。
+
+#### 15.1.2 runBlocking
+
+runBlocking函数同样会创建一个协程的作用域，但是它可以保证在协程作用域内的所有代码 和子协程没有全部执行完之前一直阻塞当前线程。需要注意的是，runBlocking函数通常只应 该在测试环境下使用，在正式环境中使用容易产生一些性能上的问题。
+
+```kotlin
+fun main() {
+    runBlocking { 
+        println("start run")
+        delay(1500)
+        println("start run end")
+    }
+    Thread.sleep(1000)
+}
+```
+
+重新运行程序，可以看到两条日志都打印出来了。
+
+上边的代码都是跑在一个协程中的，能不能创建多个协程一起跑呢？可以，使用launch函数。
+
+#### 15.1.3 launch
+
+launch 函数是 CoroutineScope 的一个扩展函数，因此只要拥有协程作用域，就可以调用 launch 函数。
+
+单独使用 launch 函数和我们刚才使用的 GlobalScope.launch 函数不同， GlobalScope.launch 创建的是一个顶级协程，而 launch 函数创建的是子协程。
+
+```kotlin
+fun main() {
+    runBlocking {
+        launch {
+            println("launch 1")
+            delay(1000)
+            println("launch 1 end")
+        }
+        launch {
+            println("launch 2")
+            delay(1000)
+            println("launch 2 end")
+        }
+    }
+}
+```
+
+上述代码我们调用了两次 launch 函数，也就是创建了两个子协程，运行之后我们可以看到两个子协程的日志是交替打印的，这一现象表明他们像是多线程那样并发运行的。然而这两个子协程实际上是运行在同一个线程中，只是由编程语言来决定如何在多个协程之间进行调度，让谁运行，让谁挂起。调度的过程完全不需要操作系统参与，这也就使得协程的并发效率出奇的高。
+
+随着launch函数中的逻辑越来越复杂，可能你需要将部分代码提取到一个单独的函数 中。这个时候就产生了一个问题:我们在launch函数中编写的代码是拥有协程作用域的，但是提取到一个单独的函数中就没有协程作用域了，那么我们该如何调用像delay()这样的挂起函数呢?
+
+#### 15.1.4 suspend
+
+suspend 关键字能将一个函数声明成挂起函数，是无法给它提供协程作用域的，挂起函数必须在协程或者另一个挂起函数里被调用。
+
+```kotlin
+suspend fun printDot() {
+    println("printDot")
+    delay(1000)
+    println("printDot end")
+}
+```
+
+但是我们不能再这个挂起函数中调用launch函数，因为没有协程作用域。我们可以借助coroutineScope来实现。
+
+#### 15.1.5 coroutineScope
+
+coroutineScope 函数会继承外部的协程作用域并创建一个子作用域，也是一个挂起函数，因此我们可以在任何其他挂起函数中调用。
+
+```kotlin
+suspend fun printDot()  = coroutineScope {
+    println("printDot")
+    delay(1000)
+    println("printDot end")
+    
+    launch { 
+        println("printDot launch")
+    }
+}
+```
+
+coroutineScope函数和runBlocking函数还有点类似，它可以保证其作用域内的所 有代码和子协程在全部执行完之前，外部的协程会一直被挂起。
+
+```kotlin
+fun main() {
+    runBlocking {
+        coroutineScope {
+            launch {
+                for (i in 1..10) {
+                    println(i)
+                }
+            }
+        }
+        println("coroutineScope end")
+    }
+    println("runBlocking end")
+}
+// 打印结果
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+coroutineScope end
+runBlocking end
+```
+
+由此可见，coroutineScope函数确实是将外部协程挂起了，只有当它作用域内的所有代码和子协程都执行完毕之后，coroutineScope函数之后的代码才能得到运行。
+
+虽然看上去coroutineScope函数和runBlocking函数的作用是有点类似的，但是 coroutineScope函数只会阻塞当前协程，既不影响其他协程，也不影响任何线程，因此是不 会造成任何性能上的问题的。而runBlocking函数由于会挂起外部线程，如果你恰好又在主线 程中当中调用它的话，那么就有可能会导致界面卡死的情况，所以不太推荐在实际项目中使 用。
+
+### 15.2 作用域构建器
+
+#### 15.2.1 取消协程
+
+协程如何取消呢？GlobalScope.launch和launch它们的返回值都是一个Job对象，只要调用Job对象的cancel()就可以取消协程了。
+
+```kotlin
+fun main() {
+    val job = GlobalScope.launch {
+        println("launch 1")
+        delay(1500)
+        println("launch 1 end")
+    }
+    Thread.sleep(1000)
+    job.cancel()
+}
+// 输出
+launch 1
+```
+
+可以看到，第二条日志并没有输出，协程被取消了。
+
+如果我们每个协程都要自己调用取消，那么当协程很多时，需要在Activity关闭时，逐个调用所有已创建协程的cancel方法。因此，GlobalScope.launch这种协程作用域构建器，在实际项目中也是不太常用的。
+
+下面我 来演示一下实际项目中比较常用的写法:
+
+```kotlin
+fun main() {
+    val job = Job()
+    val scope = CoroutineScope(job)
+    scope.launch {
+        // ...
+    }
+    job.cancel()
+}
+```
+
+首先创建了一个Job对象，然后传入CoroutineScope()方法中，这个方法会返回一个CoroutineScope对象，我们可以随时通过这个对象来创建协程。这样所有的协程都会被关联到这个Job对象的作用域下。这样只需要调用一次cancel()方法就可以将同一作用域下的所有协程全部取消。
+
+#### 15.2.2 async函数
+
+从上面的学习我们可以知道 launch 函数可以创建一个子协程，但是 launch 函数只能用于执行一段逻辑，却不能获取执行的结果，因为它的返回值永远是一个 Job 对象，那么如果我们想创建一个子协程并获取它的执行结果，我们可以使用 async 函数。
+
+> - async 函数必须在协程作用域下才能调用
+> - async 函数会创建一个子协程并返回一个 Deferred 对象，如果需要获取 async 函数代码块中的执行结果，只需要调用 Deferred 对象的 await() 方法即可
+>
+> - async 函数在调用后会立刻执行，当调用 await() 方法时，如果代码块中的代码还没执行完，那么 await() 方法会将当前协程阻塞住，直到可以获取 async 函数中的执行结果
+
+```kotlin
+fun main() {
+    runBlocking {
+        val start = System.currentTimeMillis()
+        val result1 = async {
+            delay(1000)
+            6+6
+        }
+        val result2 = async {
+            delay(1000)
+            7+7
+        }
+
+        println("${result1.await()}+${result2.await()}")
+        val end = System.currentTimeMillis()
+        println("cost: ${end - start} ms.")
+    }
+}
+```
+
+#### 15.2.3 withContext函数
+
+withContext() 函数是一个挂起函数，大体可以将它理解成async函数的一种简化版写法。
+
+> - withContext 函数是一个挂起函数，并且强制要求我们指定一个协程上下文参数，这个调度器其实就是指定协程具体的运行线程
+>
+> - withContext 函数在调用后会立刻执行，它可以保证其作用域内的所有代码和子协程在全部执行完之前，一直阻塞当前协程
+>
+> - withContext 函数会创建一个子协程并将最后一行的执行结果作为返回值
+
+```kotlin
+fun main() {
+    runBlocking {
+        val result = withContext(Dispatchers.Default) {
+            delay(1500)
+            6 + 6
+        }
+        println(result)// 输出12
+    }
+}
+```
+
+Dispatchers 调度器，它可以将协程限制在一个特定的线程执行，或者将它分派到一个线程池，或者让它不受限制地运行。常用的 Dispatchers ，有以下三种：
+
+- Dispatchers.Default：适合 CPU 密集型的任务，比如计算
+
+- Dispatchers.IO：针对磁盘和网络 IO 进行了优化，适合 IO 密集型的任务，比如：读写文件，操作数据库以及网络请求
+
+- Dispatchers.Main：Android 中的主线程
+
+事实上，在我们刚才所学的协程作用域构建器中，除了coroutineScope函数之外，其他所有 的函数都是可以指定这样一个线程参数的，只不过withContext()函数是强制要求指定的，而 其他函数则是可选的。
+
+### 15.3 使用协程简化回调的写法
+
+> - suspendCoroutine 函数必须在协程作用域或者挂起函数中调用，它接收一个 Lambda 表达式，主要作用是将当前协程立即挂起，然后在一个普通线程中去执行 Lambda 表达式中的代码
+>
+> - suspendCoroutine 函数的 Lambda 表达式参数列表会传入一个 Contination 参数，调用它的 resume() 或 resumeWithException() 方法可以让协程恢复执行
+
+```kotlin
+// 回调接口
+interface OnCallbackListener {
+    fun onSuccess(response: String)
+
+    fun onError(exception: Exception)
+}
+
+//模拟发送一个网络请求
+fun sendHttpRequest(url: String, httpCallBack: OnCallbackListener){
+
+}
+
+//对发送的网络请求回调使用 suspendCoroutine 函数进行封装
+suspend fun request(url: String) : String {
+    return suspendCoroutine {
+        sendHttpRequest(url, object : OnCallbackListener {
+            override fun onSuccess(response: String) {
+                it.resume(response)
+            }
+
+            override fun onError(exception: Exception) {
+                it.resumeWithException(exception)
+            }
+        })
+    }
+}
+
+suspend fun getResponse() {
+    try {
+        var request = request("")
+    } catch (e : Exception) {
+
+    }
+}
+```
+
+我们在 request 函数内部使用了刚刚介绍的 suspendCoroutine 函数，这样当前协程会立刻被挂起，而 Lambda 表达式中的代码则会在普通线程中执行。接着我们在 Lambda 表达式中调用了 sendHttpRequest() 方法发起网络请求，并通过传统回调的方式监听请求结果
+
+如果请求成功就调用 Continuation 的 resume() 方法恢复被挂起的协程，并传入服务器响应的数据，该值会成为 suspendCoroutine 函数的返回值
+
+如果请求失败，就调用 Continuation 的 resumeWithException() 方法恢复被挂起的协程，并传入具体的异常原因
+
+最后在 getBaiduResponse() 中进行了具体使用，有没有觉得这里的代码清爽了很多？由于  getBaiduResponse() 是一个挂起函数，当 getBaiduResponse() 调用了 request() 函数时，当前协程会立刻挂起，然后等待网络请求成功或者失败后，当前协程才能恢复运行
+
+如果请求成功，我们就能获得异步网络请求的响应数据，如果请求失败，则会直接进入 catch 语句中。
+
+更优化的写法：
+
+```kotlin
+suspend fun <T> Call<T>.await(): T {
+    return suspendCoroutine {
+        enqueue(object : Callback<T> {
+            override fun onResponse(call: Call<T>, response: Response<T>) {
+                val body = response.body()
+                if (body != null) it.resume(body)
+                else it.resumeWithException(RuntimeException("body is null"))
+            }
+
+            override fun onFailure(call: Call<T>, throwable: Throwable) {
+                it.resumeWithException(throwable)
+            }
+
+        })
+    }
+}
+```
+
+这段代码相比于刚才的request()函数又复杂了一点。首先await()函数仍然是一个挂起函 数，然后我们给它声明了一个泛型T，并将await()函数定义成了Call\<T>的扩展函数，这样 所有返回值是Call类型的Retrofit网络请求接口就都可以直接调用await()函数了。
+
+接着，await()函数中使用了suspendCoroutine函数来挂起当前协程，并且由于扩展函数的 原因，我们现在拥有了Call对象的上下文，那么这里就可以直接调用enqueue()方法让 Retrofit发起网络请求。接下来，使用同样的方式对Retrofit响应的数据或者网络请求失败的情 况进行处理就可以了。
+
+## 16. 实战demo-编写工具类
+
+### 16.1 求N个数的最大最小值
+
+Java中规定，所有类型的数字都是可比较的，因此必须实现Comparable接口，这个规则在 Kotlin中也同样成立。
+
+```kotlin
+fun <T : Comparable<T>> max(vararg nums: T) : T {
+    if (nums.isEmpty()) throw RuntimeException("params can not be empty!")
+    var maxNum = nums[0]
+    for (num in nums) {
+        if (num > maxNum) {
+            maxNum = num
+        }
+    }
+    return maxNum
+}
+```
+
+我们将泛型T的上界指定成了Comparable\<T>，那么参数T就必然是 Comparable\<T>的子类型了
+
+### 16.2 Toast简化
+
+```kotlin
+fun String.showToast(context: Context, duration: Int = Toast.LENGTH_LONG) {
+    Toast.makeText(context, this, duration).show();
+}
+
+fun Int.showToast(context: Context, duration: Int = Toast.LENGTH_LONG) {
+    Toast.makeText(context, this, duration).show();
+}
+```
 
