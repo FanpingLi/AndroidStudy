@@ -269,6 +269,8 @@ fun main() {
         println(i)
     }
 }
+// 根据索引遍历
+for (item in list.indices)
 ```
 
 ![alt](../pic/3.3.1.png)
